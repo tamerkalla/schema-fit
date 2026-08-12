@@ -19,7 +19,7 @@ import type { Poison } from './recorder.js';
 import { Recorder, isPoison, poison } from './recorder.js';
 import { ARRAY_BOUND_KEYWORDS, NUMERIC_BOUND_KEYWORDS, RULES, STRING_BOUND_KEYWORDS } from './rules.js';
 import type { Ctx } from './transform.js';
-import { definitionPolarity, mapChildrenPolar, transform } from './transform.js';
+import { mapChildrenPolar, pointsAtTroubled, transform, withDefinitionRetry } from './transform.js';
 import { renameKeyword, withKeyword, without } from './walk.js';
 
 /**
@@ -134,12 +134,15 @@ function stripUnknownKeywords(schema: JSONSchema, profile: Profile, out: Recorde
 
 function resolveReferences(schema: JSONSchema, profile: Profile, out: Recorder): JSONSchema {
   const document = schema;
-  const definitions = definitionPolarity(schema);
 
+  return withDefinitionRetry(schema, out, (plan) => {
   const walk = (node: JSONSchema, ctx: Ctx, stack: string[]): JSONSchema | Poison => {
     if (!isSchemaObject(node)) return node;
+    if (ctx.polarity !== 'positive' && pointsAtTroubled(node['$ref'], plan)) {
+      return poison(RULES.refInFlippedPosition);
+    }
 
-    const rebuilt = mapChildrenPolar(node, ctx, out, definitions, (child, childCtx) => walk(child, childCtx, stack));
+    const rebuilt = mapChildrenPolar(node, ctx, out, plan, (child, childCtx) => walk(child, childCtx, stack));
     if (isPoison(rebuilt) || !isSchemaObject(rebuilt)) return rebuilt;
 
     const ref = rebuilt['$ref'];
@@ -239,6 +242,7 @@ function resolveReferences(schema: JSONSchema, profile: Profile, out: Recorder):
     },
   });
   return current;
+  });
 }
 
 /* -------------------------------------------------------------------------- */
