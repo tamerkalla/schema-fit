@@ -304,7 +304,7 @@ npm test
 npm run typecheck
 npm run build
 npm run smoke      # loads both ESM and CJS builds
-npm run mutation   # Stryker, threshold 85%
+npm run mutation   # Stryker, threshold 85% (currently 86.06%)
 ```
 
 Property runs default to 200 per property; `SCHEMA_FIT_RUNS=25000 npm test`
