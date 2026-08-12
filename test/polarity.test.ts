@@ -84,6 +84,28 @@ describe('positions where a rewrite would run the wrong way', () => {
     });
   });
 
+  it('refuses to cut a subtree past the nesting limit inside a not', () => {
+    const shallow = variant(permissive, { id: 'shallow', maxDepth: 2 });
+    const schema = { not: { properties: { a: { properties: { b: { properties: { c: { type: 'string' } } } } } } } };
+    const result = fit(schema, shallow);
+    expect(result.schema).toEqual(NOTHING);
+    expect(result.changes.map((change) => change.rule)).toEqual(['max-depth']);
+  });
+
+  it('refuses to trim properties past the limit inside a not', () => {
+    const narrow = variant(permissive, { id: 'narrow', maxProperties: 2 });
+    const result = fit({ not: { properties: { a: true, b: true, c: true } } }, narrow);
+    expect(result.schema).toEqual(NOTHING);
+    expect(result.changes.map((change) => change.rule)).toEqual(['max-properties']);
+  });
+
+  it('refuses to collapse a list of types inside a not', () => {
+    const single = variant(permissive, { id: 'single-type', supports: { nullableViaType: false } });
+    const result = fit({ not: { type: ['string', 'null'] } }, single);
+    expect(result.schema).toEqual(NOTHING);
+    expect(result.changes.map((change) => change.rule)).toEqual(['no-nullable-via-type']);
+  });
+
   it('makes an exact rewrite inside a not, where direction does not matter', () => {
     const result = fit(
       { not: { const: 'x' } },
