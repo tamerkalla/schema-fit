@@ -115,16 +115,18 @@ function checkRefs(
   if (typeof ref !== 'string') return;
   const refPath = join(path, '$ref');
 
-  if (profile.refs === 'none') {
-    report(out, refPath, RULES.noRef, `${profile.id} does not accept references, so this one has to be replaced by what it points at.`);
-    return;
-  }
+  // Ordered the same way `fit` handles them, so the rule a violation names is
+  // the rule that will fix it.
   if (!ref.startsWith('#')) {
     report(out, refPath, RULES.externalRef, `This reference points outside the schema, and schema-fit never fetches anything.`);
     return;
   }
   if (resolve(root, ref.slice(1)) === undefined) {
     report(out, refPath, RULES.unresolvableRef, `This reference points at "${ref}", which does not exist in this schema.`);
+    return;
+  }
+  if (profile.refs === 'none') {
+    report(out, refPath, RULES.noRef, `${profile.id} does not accept references, so this one has to be replaced by what it points at.`);
     return;
   }
   if (profile.refs === 'internal-no-siblings' && hasRefSiblings(schema)) {

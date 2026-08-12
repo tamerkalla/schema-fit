@@ -118,6 +118,13 @@ const rows: Row[] = [
     profile: permissive,
     expected: [{ path: '/$ref', rule: 'unresolvable-ref' }],
   },
+  {
+    // The rule named here is the rule `fit` will use, whatever the refs setting.
+    name: 'a broken reference is reported as broken, not as a reference',
+    schema: { $ref: '#/$defs/missing' },
+    profile: noRefs,
+    expected: [{ path: '/$ref', rule: 'unresolvable-ref' }],
+  },
 
   // --- combinators --------------------------------------------------------
   {
