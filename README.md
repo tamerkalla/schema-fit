@@ -235,6 +235,23 @@ Nesting past the profile's limit does the same thing to the subtree below it.
 If a fitted schema comes back accepting nothing, `changes` says exactly which
 rule did it and where.
 
+## Optional properties, and the null trick we do not use
+
+OpenAI's documentation suggests emulating an optional field with a union type:
+make the field required, and let the model send `null` to mean "absent".
+
+`schema-fit` does not do that, because it is not sound. Given
+`{ properties: { a: { type: 'string' } }, required: [] }`, the original accepts
+`{}` and `{"a": "x"}` and rejects `{"a": null}`. Rewriting it to
+`{ properties: { a: { type: ['string','null'] } }, required: ['a'] }` accepts
+`{"a": null}` — a value the original turns away, which your code was never
+written to receive.
+
+So `fit` makes the property required and stops there. That rejects `{}`, which is
+a real loss, and it is reported: `narrowing: true`, `lossless: false`. If the
+null convention is what you want, it is a decision about your own schema, and the
+place to make it is your schema — then `fit` will carry it through untouched.
+
 ## The one place a fitted schema can be wider
 
 A profile that turns off `numericBounds`, `stringBounds`, or `arrayBounds` is

@@ -102,9 +102,12 @@ that accepts nothing.
 
 I did not design that. A property test found it: 3,467 generated schemas in, a
 counterexample where an `enum` under a `not` under a property made the fitted
-schema accept `{"a": false}` while the original rejected it. Two more rounds of
-the same test found the `oneOf` case and the `$defs` case. Every one of them was
-a rewrite that reads as obviously correct in isolation.
+schema accept `{"a": false}` while the original rejected it. The next run found
+the `oneOf` case — a nested `oneOf` whose inner rewrite changed how many branches
+of the outer one matched. The `$defs` case never came back as a counterexample;
+it is the same argument applied to a definition that a reference carries into a
+negated position, and it was cheaper to handle than to argue my way out of. Every
+one of the three is a rewrite that reads as obviously correct in isolation.
 
 ## Test the implication, not the output
 
