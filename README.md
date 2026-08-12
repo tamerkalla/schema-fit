@@ -280,7 +280,11 @@ generator of draft 2020-12 schemas:
 Plus purity (deep-frozen inputs) and determinism (stable ordering, repeatable
 results). Every rule is table-tested per profile in
 [`test/check.test.ts`](test/check.test.ts) and
-[`test/fit.test.ts`](test/fit.test.ts), asserting whole arrays.
+[`test/fit.test.ts`](test/fit.test.ts), asserting whole arrays. The positions
+where a rewrite would run the wrong way have their own file,
+[`test/polarity.test.ts`](test/polarity.test.ts), and the merge engine has
+[`test/intersect.test.ts`](test/intersect.test.ts) — what merges exactly, and
+what cannot be written as one schema.
 
 ```bash
 npm test
