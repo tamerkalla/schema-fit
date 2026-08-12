@@ -13,6 +13,14 @@
     "structured-outputs"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamerkalla/schema-fit.git"
+  },
+  "homepage": "https://github.com/tamerkalla/schema-fit#readme",
+  "bugs": {
+    "url": "https://github.com/tamerkalla/schema-fit/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
