@@ -3,6 +3,14 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # A tag is the usual trigger. This one is here for environments that cannot
+  # push tags, and for re-running a release that failed after the tag landed.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and check everything, but stop short of publishing
+        type: boolean
+        default: false
 
 jobs:
   publish:
@@ -24,5 +32,6 @@ jobs:
       - run: node scripts/smoke.mjs
       - run: node scripts/smoke.cjs
       - run: npm publish --provenance --access public
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
