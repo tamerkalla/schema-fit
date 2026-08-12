@@ -318,6 +318,23 @@ describe('check', () => {
     ]);
   });
 
+  it('sorts two violations at the same path by rule', () => {
+    // The property schema sits one level too deep *and* the object it hangs off
+    // has to be closed, so both land on the same pointer.
+    const flat = variant(profiles.openaiStrict, { maxDepth: 0 });
+    const result = check({ type: 'object', properties: { a: { type: 'object' } }, required: ['a'] }, flat);
+    expect(result.violations.map((violation) => [violation.path, violation.rule])).toEqual([
+      ['/additionalProperties', 'additional-properties-must-be-false'],
+      ['/properties/a', 'max-depth'],
+    ]);
+  });
+
+  it('counts nesting from the root, whichever way down', () => {
+    const flat = variant(permissive, { maxDepth: 1 });
+    const result = check({ items: { properties: { a: { type: 'string' } } } }, flat);
+    expect(result.violations.map((violation) => violation.path)).toEqual(['/items/properties/a']);
+  });
+
   it('does not touch the schema it is given', () => {
     const schema = Object.freeze({ type: 'string', allOf: Object.freeze([Object.freeze({ minimum: 1 })]) });
     expect(() => check(schema, profiles.openaiStrict)).not.toThrow();

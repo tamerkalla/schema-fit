@@ -183,6 +183,30 @@ describe('definitions take the position of whatever references them', () => {
     expect(check(result.schema, strictButExpressive).ok).toBe(true);
   });
 
+  it('gives up on a reference that points inside a troubled definition', () => {
+    const schema = {
+      $defs: { shared: { type: 'object', properties: { a: definition } } },
+      type: 'object',
+      properties: { p: { not: { $ref: '#/$defs/shared/properties/a' } } },
+    };
+    const result = fit(schema, strictButExpressive);
+    const properties = (result.schema as Record<string, Record<string, JSONSchema>>)['properties'] as Record<string, JSONSchema>;
+    expect(properties['p']).toEqual(NOTHING);
+    expect(check(result.schema, strictButExpressive).ok).toBe(true);
+  });
+
+  it('needs no second run when every definition stands where it is used', () => {
+    const schema = {
+      $defs: { shared: definition },
+      type: 'object',
+      properties: { p: { $ref: '#/$defs/shared' } },
+      additionalProperties: false,
+    };
+    const result = fit(schema, strictButExpressive);
+    // One change, from the one object that was open — no sign of a second run.
+    expect(result.changes.map((change) => change.path)).toEqual(['/$defs/shared/additionalProperties']);
+  });
+
   it('rewrites a definition nothing references at all', () => {
     const schema = { $defs: { unused: definition }, type: 'object', properties: {} };
     const result = fit(schema, strictButExpressive);

@@ -31,6 +31,13 @@ describe('json pointers', () => {
     expect(resolve(document, '/c~0d')).toBe(1);
   });
 
+  it('resolves an index past the first ten', () => {
+    const document = { list: Array.from({ length: 12 }, (_, index) => ({ index })) };
+    expect(resolve(document, '/list/10')).toEqual({ index: 10 });
+    expect(resolve(document, '/list/11')).toEqual({ index: 11 });
+    expect(resolve(document, '/list/12')).toBeUndefined();
+  });
+
   it('returns undefined for anything it cannot reach', () => {
     const document = { a: { b: 1 }, list: [1] };
     expect(resolve(document, '/missing')).toBeUndefined();
