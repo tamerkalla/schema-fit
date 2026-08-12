@@ -321,11 +321,13 @@ describe('check', () => {
   it('sorts two violations at the same path by rule', () => {
     // The property schema sits one level too deep *and* the object it hangs off
     // has to be closed, so both land on the same pointer.
+    // The schema for anything undeclared is both a level too deep and not the
+    // `false` this provider demands, so both violations land on one pointer.
     const flat = variant(profiles.openaiStrict, { maxDepth: 0 });
-    const result = check({ type: 'object', properties: { a: { type: 'object' } }, required: ['a'] }, flat);
+    const result = check({ type: 'object', additionalProperties: { type: 'string' } }, flat);
     expect(result.violations.map((violation) => [violation.path, violation.rule])).toEqual([
       ['/additionalProperties', 'additional-properties-must-be-false'],
-      ['/properties/a', 'max-depth'],
+      ['/additionalProperties', 'max-depth'],
     ]);
   });
 

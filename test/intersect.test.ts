@@ -119,6 +119,31 @@ const rows: Row[] = [
   { name: 'unevaluatedProperties cannot be merged', a: { unevaluatedProperties: false }, b: { type: 'object' }, schema: NOTHING, exact: false },
 
 
+  { name: 'the second side accepting nothing swallows the first', a: { type: 'string' }, b: false, schema: NOTHING, exact: true },
+  { name: 'the empty schema on the second side is the identity', a: { type: 'string' }, b: {}, schema: { type: 'string' }, exact: true },
+  { name: 'annotations on the second side alone are the identity', a: { type: 'string' }, b: { title: 'x' }, schema: { type: 'string' }, exact: true },
+  { name: 'two enums meeting at one value stay an enum', a: { enum: ['a', 'b'] }, b: { enum: ['b', 'c'] }, schema: { enum: ['b'] }, exact: true },
+  { name: 'uniqueness asked for by the first side alone', a: { uniqueItems: true }, b: { uniqueItems: false }, schema: { uniqueItems: true }, exact: true },
+  { name: 'uniqueness asked for by the second side alone', a: { uniqueItems: false }, b: { uniqueItems: true }, schema: { uniqueItems: true }, exact: true },
+  {
+    name: 'a conditional on the first side is carried across whole',
+    a: { if: { required: ['x'] }, then: { required: ['y'] } },
+    b: { type: 'object' },
+    schema: { type: 'object', if: { required: ['x'] }, then: { required: ['y'] } },
+    exact: true,
+  },
+  {
+    name: 'a property the pattern does not match still meets additionalProperties',
+    a: { patternProperties: { '^a': { type: 'string' } }, additionalProperties: { maxLength: 2 } },
+    b: { properties: { zz: { type: 'string' } } },
+    schema: {
+      properties: { zz: { type: 'string', maxLength: 2 } },
+      patternProperties: { '^a': { type: 'string' } },
+      additionalProperties: { maxLength: 2 },
+    },
+    exact: true,
+  },
+
   // --- one side only: the carry paths -------------------------------------
   { name: 'a type on one side only is carried across', a: { type: 'string' }, b: { minLength: 1 }, schema: { type: 'string', minLength: 1 }, exact: true },
   { name: 'a const on the second side is carried across', a: { type: 'string' }, b: { const: 'x' }, schema: { type: 'string', const: 'x' }, exact: true },
