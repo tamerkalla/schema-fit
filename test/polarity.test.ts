@@ -106,6 +106,31 @@ describe('positions where a rewrite would run the wrong way', () => {
     expect(result.changes.map((change) => change.rule)).toEqual(['no-nullable-via-type']);
   });
 
+  it('allows a rewrite that loosens a negated schema, and reports it as the narrowing it is', () => {
+    // Dropping a limit widens the schema it sits in. Inside a `not`, that makes
+    // the schema around it stricter — sound, but a loss worth reporting.
+    const ignoresBounds = variant(permissive, { id: 'ignores-bounds', supports: { numericBounds: false } });
+    const result = fit({ not: { minimum: 5 } }, ignoresBounds);
+    expect(result.schema).toEqual({ not: {} });
+    expect(result.changes).toEqual([
+      {
+        path: '/not/minimum',
+        rule: 'no-numeric-bounds',
+        message: expect.stringContaining('minimum'),
+        narrowing: true,
+      },
+    ]);
+    expect(result.lossless).toBe(false);
+  });
+
+  it('reports the same rewrite in an ordinary position as no loss at all', () => {
+    const ignoresBounds = variant(permissive, { id: 'ignores-bounds', supports: { numericBounds: false } });
+    const result = fit({ minimum: 5 }, ignoresBounds);
+    expect(result.schema).toEqual({});
+    expect(result.changes.map((change) => change.narrowing)).toEqual([false]);
+    expect(result.lossless).toBe(true);
+  });
+
   it('makes an exact rewrite inside a not, where direction does not matter', () => {
     const result = fit(
       { not: { const: 'x' } },

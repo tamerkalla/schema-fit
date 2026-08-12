@@ -252,6 +252,19 @@ a real loss, and it is reported: `narrowing: true`, `lossless: false`. If the
 null convention is what you want, it is a decision about your own schema, and the
 place to make it is your schema — then `fit` will carry it through untouched.
 
+## What a profile cannot say
+
+A `Profile` has a field for every keyword group it can talk about, and no others.
+Keywords outside that list — `if`/`then`/`else`, `contains`, `propertyNames`,
+`dependentSchemas`, `dependentRequired`, `unevaluatedProperties`,
+`unevaluatedItems`, `$schema`, `$id` — are carried through untouched, because
+there is no field to consult and dropping them would widen the schema.
+
+If your provider rejects one of those, `check` will not warn you and `fit` will
+not remove it. `fit` still handles them correctly where they affect soundness:
+a subschema under `if` is a position where rewrites are refused, exactly like one
+under `not`.
+
 ## The one place a fitted schema can be wider
 
 A profile that turns off `numericBounds`, `stringBounds`, or `arrayBounds` is
