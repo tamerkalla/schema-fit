@@ -222,6 +222,18 @@ const rows: Row[] = [
     changes: [{ path: '/allOf', rule: 'no-allof', narrowing: false }],
   },
   {
+    // Merging the outer allOf pulls the inner one up to the same node, so the
+    // node has to be worked over more than once.
+    name: 'an allOf nested inside an allOf is merged all the way down',
+    schema: { allOf: [{ allOf: [{ type: 'string', minLength: 1 }] }, { maxLength: 4 }] },
+    profile: variant(permissive, { supports: { allOf: false } }),
+    fitted: { type: 'string', minLength: 1, maxLength: 4 },
+    changes: [
+      { path: '/allOf', rule: 'no-allof', narrowing: false },
+      { path: '/allOf', rule: 'no-allof', narrowing: false },
+    ],
+  },
+  {
     name: 'an unmergeable allOf accepts nothing rather than too much',
     schema: { allOf: [{ pattern: '^a' }, { pattern: '^b' }] },
     profile: variant(permissive, { supports: { allOf: false } }),
@@ -233,6 +245,22 @@ const rows: Row[] = [
     schema: { not: { type: 'string' } },
     profile: variant(permissive, { supports: { not: false } }),
     fitted: { type: ['null', 'boolean', 'object', 'array', 'number'] },
+    changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
+  },
+  {
+    // Ruling out whole numbers leaves the fractions, which no type describes,
+    // so numbers go entirely rather than let the integers back in.
+    name: 'not over integers gives up numbers altogether',
+    schema: { not: { type: ['integer', 'null'] } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: { type: ['boolean', 'object', 'array', 'string'] },
+    changes: [{ path: '/not', rule: 'no-not', narrowing: true }],
+  },
+  {
+    name: 'not over numbers rules out the integers too',
+    schema: { type: ['integer', 'string'], not: { type: 'number' } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: { type: 'string' },
     changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
   },
   {

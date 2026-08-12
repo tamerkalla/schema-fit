@@ -483,20 +483,43 @@ function removeNot(node: JSONSchemaObject, ctx: Ctx, profile: Profile, out: Reco
     if (meaningful.length === 1 && meaningful[0] === 'type') {
       const excluded = typeList(negated) ?? [];
       const base = typeList(rest) ?? BASE_TYPES;
-      const kept = base.filter(
-        (type) => !excluded.includes(type) && !(type === 'integer' && excluded.includes('number')),
-      );
-      if (kept.length === 0) {
-        out.apply(at, RULES.noNot, `Removed "not" by ruling out every remaining type, so the schema accepts nothing.`, 'exact', ctx.polarity);
-        return unsatisfiable();
+      const kept: string[] = [];
+      let exact = true;
+
+      for (const type of base) {
+        if (excluded.includes(type)) continue;
+        // Every integer is a number, so ruling out numbers rules out integers.
+        if (type === 'integer' && excluded.includes('number')) continue;
+        if (type === 'number' && excluded.includes('integer')) {
+          // The other way round has no answer: "a number that is not an
+          // integer" is not a type. Giving up the whole of `number` costs the
+          // fractions, and is the only way not to let the integers back in.
+          exact = false;
+          continue;
+        }
+        kept.push(type);
       }
-      out.apply(
+
+      if (kept.length === 0) {
+        const ok = out.apply(
+          at,
+          RULES.noNot,
+          `Removed "not" by ruling out every remaining type, so the schema accepts nothing.`,
+          exact ? 'exact' : 'narrowing',
+          ctx.polarity,
+        );
+        return ok ? unsatisfiable() : poison(RULES.noNot);
+      }
+      const ok = out.apply(
         at,
         RULES.noNot,
-        `Replaced "not" with the list of types it left over, because ${profile.id} does not accept "not"; the same values are still valid.`,
-        'exact',
+        exact
+          ? `Replaced "not" with the list of types it left over, because ${profile.id} does not accept "not"; the same values are still valid.`
+          : `Replaced "not" with the list of types it left over and gave up numbers altogether, because ${profile.id} does not accept "not" and "a number that is not a whole number" is not a type; the schema now rejects fractions it used to allow.`,
+        exact ? 'exact' : 'narrowing',
         ctx.polarity,
       );
+      if (!ok) return poison(RULES.noNot);
       return withKeyword(rest, 'type', kept.length === 1 ? (kept[0] as string) : kept);
     }
 
