@@ -1,12 +1,5 @@
 import type { JSONSchema, JSONSchemaObject } from './types.js';
-import {
-  NESTING_KEYWORDS,
-  SCHEMA_ARRAY_KEYWORDS,
-  SCHEMA_KEYWORDS,
-  SCHEMA_MAP_KEYWORDS,
-  isSchema,
-  isSchemaObject,
-} from './keywords.js';
+import { NESTING_KEYWORDS, SCHEMA_ARRAY_KEYWORDS, SCHEMA_KEYWORDS, SCHEMA_MAP_KEYWORDS, isSchema, isSchemaObject } from './keywords.js';
 import { join } from './pointer.js';
 
 /**
@@ -68,13 +61,6 @@ export function mapChildren(schema: JSONSchemaObject, path: string, visit: Rewri
   }
 
   return changed ? out : schema;
-}
-
-/** Apply `rewrite` to every schema in the tree, deepest first. */
-export function postOrder(schema: JSONSchema, path: string, rewrite: Rewriter): JSONSchema {
-  if (!isSchemaObject(schema)) return rewrite(schema, path, false, '');
-  const withChildren = mapChildren(schema, path, (child, childPath) => postOrder(child, childPath, rewrite));
-  return rewrite(withChildren, path, false, '');
 }
 
 /** A copy with `keyword` removed, keeping the order of everything else. */

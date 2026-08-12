@@ -123,6 +123,15 @@ function notSchema(inner: fc.Arbitrary<JSONSchema>): fc.Arbitrary<JSONSchema> {
   return inner.map((schema) => ({ not: schema }) as JSONSchema);
 }
 
+/** `if` is the other position where a stricter subschema is not a stricter whole. */
+function conditionalSchema(inner: fc.Arbitrary<JSONSchema>): fc.Arbitrary<JSONSchema> {
+  return fc.tuple(inner, inner, fc.option(inner, { nil: undefined })).map(([condition, then, otherwise]) => {
+    const out: JSONSchemaObject = { if: condition, then };
+    if (otherwise !== undefined) out['else'] = otherwise;
+    return out;
+  });
+}
+
 function annotated(inner: fc.Arbitrary<JSONSchema>): fc.Arbitrary<JSONSchema> {
   return fc.tuple(inner, fc.string({ maxLength: 5 })).map(([schema, note]) =>
     typeof schema === 'boolean' ? schema : ({ ...schema, title: note, 'x-vendor': note } as JSONSchema),
@@ -140,22 +149,33 @@ function schemaAt(depth: number): fc.Arbitrary<JSONSchema> {
     { arbitrary: patternPropertiesSchema(inner), weight: 1 },
     { arbitrary: combinatorSchema(inner), weight: 2 },
     { arbitrary: notSchema(scalarSchema), weight: 1 },
+    { arbitrary: conditionalSchema(scalarSchema), weight: 1 },
     { arbitrary: annotated(inner), weight: 1 },
   );
 }
 
 /** A schema with a `$defs` section and references into it, none of them cyclic. */
 function referencing(inner: fc.Arbitrary<JSONSchema>): fc.Arbitrary<JSONSchema> {
-  return fc.tuple(inner, inner, fc.boolean()).map(([definition, other, withSibling]) => ({
-    $defs: { shared: definition },
-    type: 'object',
-    properties: {
-      p: withSibling ? { $ref: '#/$defs/shared', description: 'a note' } : { $ref: '#/$defs/shared' },
-      q: { $ref: '#/$defs/shared' },
-      r: other,
-    },
-    required: ['p'],
-  }));
+  const siblings = fc.constantFrom<JSONSchemaObject>(
+    {},
+    { description: 'a note' },
+    { minLength: 1 },
+    { type: 'string' },
+  );
+  return fc
+    .tuple(inner, inner, siblings, fc.boolean())
+    .map(([definition, other, sibling, negated]) => ({
+      $defs: { shared: definition },
+      type: 'object',
+      properties: {
+        p: { $ref: '#/$defs/shared', ...sibling },
+        // A reference reached through a `not` puts the definition itself in a
+        // position where narrowing it would widen the schema.
+        q: negated ? { not: { $ref: '#/$defs/shared' } } : { $ref: '#/$defs/shared' },
+        r: other,
+      },
+      required: ['p'],
+    }));
 }
 
 export function schemaArbitrary(depth = 3): fc.Arbitrary<JSONSchema> {

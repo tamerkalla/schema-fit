@@ -29,13 +29,6 @@ export function polarityFor(parent: Polarity, keyword: string): Polarity {
   return parent;
 }
 
-/** Polarity of a position `inner` inside a subschema that itself sits at `outer`. */
-export function composePolarity(outer: Polarity, inner: Polarity): Polarity {
-  if (outer === 'invariant' || inner === 'invariant') return 'invariant';
-  if (inner === 'negative') return flipPolarity(outer);
-  return outer;
-}
-
 /** The weakest position that covers both, for a definition used in two places. */
 export function combinePolarity(a: Polarity, b: Polarity): Polarity {
   return a === b ? a : 'invariant';

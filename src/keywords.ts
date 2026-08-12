@@ -136,8 +136,6 @@ export const ANNOTATION_KEYWORDS = new Set<string>([
   'examples',
 ]);
 
-export const JSON_TYPES = ['null', 'boolean', 'object', 'array', 'number', 'string', 'integer'];
-
 export function isSchemaObject(schema: unknown): schema is JSONSchemaObject {
   return typeof schema === 'object' && schema !== null && !Array.isArray(schema);
 }
