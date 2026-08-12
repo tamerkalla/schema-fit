@@ -248,6 +248,109 @@ const rows: Row[] = [
     changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
   },
   {
+    name: 'not over everything leaves a schema that accepts nothing',
+    schema: { not: true },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
+  },
+  {
+    name: 'not over a schema that only annotates also rules out everything',
+    schema: { not: { title: 'anything at all' } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
+  },
+  {
+    name: 'not ruling out every allowed value leaves nothing',
+    schema: { const: 'a', not: { enum: ['a', 'b'] } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/not', rule: 'no-not', narrowing: false }],
+  },
+  {
+    name: 'not over more than one keyword cannot be rewritten',
+    schema: { enum: ['a', 'b'], not: { enum: ['a'], minLength: 1 } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/not', rule: 'no-not', narrowing: true }],
+  },
+  {
+    name: 'not over values with nothing to subtract them from cannot be rewritten',
+    schema: { type: 'string', not: { enum: ['a'] } },
+    profile: variant(permissive, { supports: { not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/not', rule: 'no-not', narrowing: true }],
+  },
+  {
+    name: 'a oneOf option that accepts nothing cannot overlap the others',
+    schema: { oneOf: [{ type: 'string' }, false] },
+    profile: variant(permissive, { supports: { oneOf: false } }),
+    fitted: { anyOf: [{ type: 'string' }, false] },
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: false }],
+  },
+  {
+    name: 'whole numbers overlap numbers, so that oneOf has no safe option',
+    schema: { oneOf: [{ type: 'integer' }, { type: 'number' }] },
+    profile: variant(permissive, { supports: { oneOf: false, allOf: false, not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: true }],
+  },
+  {
+    name: 'whole numbers and text cannot overlap',
+    schema: { oneOf: [{ type: 'integer' }, { type: 'string' }] },
+    profile: variant(permissive, { supports: { oneOf: false } }),
+    fitted: { anyOf: [{ type: 'integer' }, { type: 'string' }] },
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: false }],
+  },
+  {
+    name: 'options pinned to different values cannot overlap',
+    schema: { oneOf: [{ enum: ['a', 'b'] }, { enum: ['c'] }] },
+    profile: variant(permissive, { supports: { oneOf: false } }),
+    fitted: { anyOf: [{ enum: ['a', 'b'] }, { enum: ['c'] }] },
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: false }],
+  },
+  {
+    name: 'options sharing a value can overlap, so neither is safe to keep',
+    schema: { oneOf: [{ enum: ['a', 'b'] }, { enum: ['b', 'c'] }] },
+    profile: variant(permissive, { supports: { oneOf: false, allOf: false, not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: true }],
+  },
+  {
+    name: 'a discriminator only counts when every option requires it',
+    schema: {
+      oneOf: [
+        { type: 'object', properties: { kind: { const: 'a' } }, required: ['kind'] },
+        { type: 'object', properties: { kind: { const: 'b' } }, required: [] },
+      ],
+    },
+    profile: variant(permissive, { supports: { oneOf: false, allOf: false, not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: true }],
+  },
+  {
+    name: 'a discriminator only counts when every option is an object',
+    schema: {
+      oneOf: [
+        { type: 'object', properties: { kind: { const: 'a' } }, required: ['kind'] },
+        { properties: { kind: { const: 'b' } }, required: ['kind'] },
+      ],
+    },
+    profile: variant(permissive, { supports: { oneOf: false, allOf: false, not: false } }),
+    fitted: NOTHING,
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: true }],
+  },
+  {
+    // The last two options overlap each other, which is fine: what matters is
+    // that the one kept cannot overlap anything.
+    name: 'one option that cannot overlap the rest is kept on its own',
+    schema: { oneOf: [{ type: 'string' }, { type: 'integer' }, { type: 'number' }] },
+    profile: variant(permissive, { supports: { oneOf: false, anyOf: false, allOf: false, not: false } }),
+    fitted: { type: 'string' },
+    changes: [{ path: '/oneOf', rule: 'no-oneof', narrowing: true }],
+  },
+  {
     // Ruling out whole numbers leaves the fractions, which no type describes,
     // so numbers go entirely rather than let the integers back in.
     name: 'not over integers gives up numbers altogether',
