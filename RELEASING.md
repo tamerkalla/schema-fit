@@ -34,11 +34,11 @@ The registry rejects a version that already exists, so the version bump in step
 
 ## What a release checks
 
-- `npm run typecheck`, `npm test` (314 tests), `npm run build`
+- `npm run typecheck`, `npm test` (345 tests), `npm run build`
 - `node scripts/smoke.mjs` and `node scripts/smoke.cjs` against the built dual
   ESM/CJS entry points
 - CI additionally runs the matrix on Node 18, 20 and 22, and a mutation-testing
-  job that fails below 85% (currently 86.06%)
+  job that fails below 85% (currently 85.92%)
 
 ## Verifying a published version
 

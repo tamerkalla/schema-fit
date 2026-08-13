@@ -35,6 +35,19 @@ a rewrite cannot be written any other way, "accepts nothing" is the only answer
 that keeps the implication true, and it is always recorded as narrowing. See
 [Where fit gives up](#where-fit-gives-up).
 
+### The assumption it rests on
+
+`validate` above means draft 2020-12 with its default vocabularies, where
+`format` is an **annotation** — a note about a string, not a rule. `fit` drops a
+format the provider does not honour on exactly that basis.
+
+If you validate with the format-assertion vocabulary switched on — which is what
+`ajv-formats` does — then a dropped `format` is a real widening, and the fitted
+schema will accept `"zz"` where your original accepted only an email address.
+Two ways to keep the guarantee under format assertion: stick to formats your
+profile honours (the matrix below lists them), or keep validating responses
+against your original schema, which is the source of truth either way.
+
 ## Usage
 
 ```ts
@@ -189,6 +202,7 @@ instances the original accepted are marked.
 | 5 | Drop or fold unsupported constraints | see below |
 | 6 | Set `additionalProperties: false` | yes |
 | 7 | Add every property to `required` | yes |
+| 7b | Drop a property nothing could satisfy, rather than require it | yes |
 | 8 | Trim objects past the property limit | yes |
 | 9 | Cut everything past the nesting limit | yes |
 | 10 | Collapse a list of types to one type | yes, unless the list held one type |
@@ -231,6 +245,17 @@ accepts nothing — recorded as narrowing, never as a silent widening:
    Rather than apply the rewrite there, `fit` replaces the enclosing schema.
 
 Nesting past the profile's limit does the same thing to the subtree below it.
+
+The one place `fit` steps around this rather than into it is a profile that
+requires every property, given a self-referential schema. Requiring
+`next` at every level of `{"next": {"$ref": "#"}}` leaves nothing finite to
+satisfy it, so the property is dropped instead — it was optional, so an object
+without it is one the original accepts. Recursion that ends in an empty array
+(`{"children": {"type": "array", "items": {"$ref": "#"}}}`) needs no such help
+and is left alone.
+
+The null-union trick would keep the recursion, and is unsound: it accepts
+`{"next": null}`, which the original rejects. See below.
 
 If a fitted schema comes back accepting nothing, `changes` says exactly which
 rule did it and where.
@@ -304,7 +329,7 @@ npm test
 npm run typecheck
 npm run build
 npm run smoke      # loads both ESM and CJS builds
-npm run mutation   # Stryker, threshold 85% (currently 86.06%)
+npm run mutation   # Stryker, threshold 85% (currently 85.92%)
 ```
 
 Property runs default to 200 per property; `SCHEMA_FIT_RUNS=25000 npm test`

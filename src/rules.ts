@@ -26,8 +26,9 @@ export const RULES = {
   propertyMustBeRequired: 'property-must-be-required',
   maxProperties: 'max-properties',
   maxDepth: 'max-depth',
-  /** Only `fit` reports this one: it is a way out, not a profile violation. */
+  /** Only `fit` reports these two: they are ways out, not profile violations. */
   refInFlippedPosition: 'ref-in-flipped-position',
+  unreachableProperty: 'unreachable-property',
 } as const;
 
 export type RuleId = (typeof RULES)[keyof typeof RULES];

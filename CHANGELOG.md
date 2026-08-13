@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.2
+
+- **Fixed:** a profile that requires every property turned a self-referential
+  schema into one that accepts nothing. Requiring `next` at every level of
+  `{"next": {"$ref": "#"}}` leaves no finite instance, so `fit` now drops the
+  property instead — it was optional, so an object without it is one the
+  original accepts. Recursion that ends in an empty array is untouched.
+  Reported as the new `unreachable-property` rule.
+- Soundness could not catch this: a schema that accepts nothing accepts nothing
+  the original rejects. Two properties now cover the other direction — a
+  lossless fit loses no instance, and a fit of a satisfiable schema still
+  accepts something.
+- The README now names the assumption the guarantee rests on: `format` is an
+  annotation in draft 2020-12, so dropping one changes nothing *unless* you
+  validate with the format-assertion vocabulary, as `ajv-formats` does.
+
 ## 0.1.1
 
 - `package.json` now points at the repository, which npm requires before it will

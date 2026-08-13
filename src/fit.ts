@@ -13,6 +13,7 @@ import {
   typeList,
 } from './keywords.js';
 import { formatAccepted, hasRefSiblings, isConformingRoot } from './check.js';
+import { unreachableProperties } from './inhabited.js';
 import { intersect, intersectAll, isUnsatisfiable, unsatisfiable } from './intersect.js';
 import { join, resolve } from './pointer.js';
 import type { Poison } from './recorder.js';
@@ -880,14 +881,41 @@ function closeObjects(schema: JSONSchema, profile: Profile, out: Recorder): JSON
 
 function requireEveryProperty(schema: JSONSchema, profile: Profile, out: Recorder): JSONSchema {
   if (!profile.allPropertiesMustBeRequired) return schema;
+  // Worked out once, over the schema as it stands before this pass: which
+  // optional properties cannot be required without leaving a schema that
+  // accepts nothing.
+  const unreachable = unreachableProperties(schema);
+
   return transform(schema, out, {
     after: (node, ctx) => {
       if (!isSchemaObject(node['properties'])) return node;
-      const names = Object.keys(node['properties']);
+      const properties = node['properties'];
+      const names = Object.keys(properties);
       const required = Array.isArray(node['required']) ? [...node['required']] : [];
       const missing = names.filter((name) => !required.includes(name));
       if (missing.length === 0) return node;
+
+      const dropped: string[] = [];
       for (const name of missing) {
+        const property = properties[name];
+        // Requiring a property nothing can satisfy leaves an object nothing can
+        // satisfy either — which is what a self-referential property does once
+        // every property is required. The property was optional, so an object
+        // without it is one the original accepts: dropping it keeps the schema
+        // usable, and closing the object keeps it sound.
+        if (isSchema(property) && unreachable.has(join(ctx.path, 'properties', name))) {
+          const ok = out.apply(
+            join(ctx.path, 'properties', name),
+            RULES.unreachableProperty,
+            `Dropped "${name}" instead of marking it required, because nothing can satisfy it and ${profile.id} requires every property it declares; requiring it would have left a schema that accepts nothing at all. The schema now rejects objects carrying "${name}".`,
+            'narrowing',
+            ctx.polarity,
+          );
+          if (!ok) return poison(RULES.unreachableProperty);
+          dropped.push(name);
+          continue;
+        }
+
         const ok = out.apply(
           join(ctx.path, 'properties', name),
           RULES.propertyMustBeRequired,
@@ -898,7 +926,17 @@ function requireEveryProperty(schema: JSONSchema, profile: Profile, out: Recorde
         if (!ok) return poison(RULES.propertyMustBeRequired);
         required.push(name);
       }
-      return withKeyword(node, 'required', required);
+
+      let result = node;
+      if (dropped.length > 0) {
+        const kept: JSONSchemaObject = {};
+        for (const name of names) if (!dropped.includes(name)) kept[name] = properties[name];
+        result = withKeyword(result, 'properties', kept);
+        // Closing the object is what bans the dropped names rather than leaving
+        // them unconstrained.
+        result = withKeyword(result, 'additionalProperties', false);
+      }
+      return withKeyword(result, 'required', required);
     },
   });
 }

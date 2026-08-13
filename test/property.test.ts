@@ -236,6 +236,69 @@ describe('property 6: determinism', () => {
   });
 });
 
+
+describe('property 7: losslessness means nothing was lost', () => {
+  /**
+   * Soundness says the fitted schema never accepts more. It says nothing about
+   * accepting *less* — a schema that accepts nothing passes every soundness
+   * test ever written. This is the other direction, claimed exactly where the
+   * library claims it: when no change is marked narrowing, no instance is lost.
+   */
+  it('an instance the original accepts, a lossless fit accepts too', () => {
+    fc.assert(
+      fc.property(schemaArbitrary(), anyProfile, fc.array(instanceArbitrary, { maxLength: 6 }), (schema, profile, instances) => {
+        const result = fitOrSkip(schema, profile);
+        if (!result || !result.lossless) return;
+
+        const original = compile(schema);
+        if (!original) return;
+        const fitted = compile(result.schema);
+        expect(fitted).toBeDefined();
+
+        for (const instance of [...instances, ...fakeInstances(schema, 3)]) {
+          if (original(instance)) {
+            expect(fitted!(instance), `a lossless fit rejected ${JSON.stringify(instance)}`).toBe(true);
+          }
+        }
+      }),
+      { numRuns: RUNS },
+    );
+  });
+
+  it('a fit of a satisfiable schema still accepts something', () => {
+    // Soundness alone cannot catch a schema fitted into accepting nothing, so
+    // each case carries a witness the original accepts and the fitted one must
+    // still accept. The recursive case is the one that used to fail: requiring
+    // a self-referential property leaves no finite instance at all.
+    const cases: Array<[string, JSONSchema, unknown]> = [
+      ['a required property', { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] }, { a: 'x' }],
+      [
+        'a self-referential property',
+        { $defs: { N: { type: 'object', properties: { next: { $ref: '#/$defs/N' } } } }, type: 'object', properties: { n: { $ref: '#/$defs/N' } } },
+        { n: {} },
+      ],
+      [
+        'recursion through an array',
+        { $defs: { N: { type: 'object', properties: { kids: { type: 'array', items: { $ref: '#/$defs/N' } } } } }, type: 'object', properties: { n: { $ref: '#/$defs/N' } } },
+        { n: { kids: [] } },
+      ],
+      ['a fixed value', { type: 'object', properties: { kind: { const: 'a' } } }, { kind: 'a' }],
+      ['a list', { type: 'object', properties: { list: { type: 'array', items: { type: 'string' } } } }, { list: [] }],
+    ];
+
+    for (const profile of [profiles.openaiStrict, profiles.anthropic, profiles.gemini]) {
+      for (const [name, schema, witness] of cases) {
+        const result = fitOrSkip(schema, profile);
+        if (!result) continue; // gemini cannot inline a cycle, and says so
+        const original = compile(schema)!;
+        expect(original(witness), `the witness for ${name} is wrong`).toBe(true);
+        const fitted = compile(result.schema)!;
+        expect(fitted(witness), `${profile.id} fitted ${name} into something that rejects ${JSON.stringify(witness)}`).toBe(true);
+      }
+    }
+  });
+});
+
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === 'object') {
     for (const key of Object.keys(value as Record<string, unknown>)) {
