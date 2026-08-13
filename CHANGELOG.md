@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.3
+
+- The release workflow now tags the commit it published and cuts a GitHub
+  release from the changelog entry, instead of only being *triggered* by a tag
+  someone pushed by hand. Releases 0.1.0 through 0.1.2 are untagged for that
+  reason; they were published from `50bd734` (0.1.1) and `6aba240` (0.1.2).
+- It also checks its own preconditions before signing anything — the
+  `repository` field provenance validates against, an npm new enough for
+  trusted publishing, and a version that is not already on the registry — and
+  afterwards installs the published package from the registry and loads both
+  entry points.
+
+No change to the library itself.
+
 ## 0.1.2
 
 - **Fixed:** a profile that requires every property turned a self-referential

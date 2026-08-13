@@ -3,8 +3,8 @@ name: Release
 on:
   push:
     tags: ['v*']
-  # A tag is the usual trigger. This one is here for environments that cannot
-  # push tags, and for re-running a release that failed after the tag landed.
+  # A tag is one way in. This is the other, for environments that cannot push
+  # tags, and for re-running a release that failed after the tag landed.
   workflow_dispatch:
     inputs:
       dry_run:
@@ -16,7 +16,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      # Enough to push the tag and cut the release for what was just published.
+      contents: write
       # npm's trusted publishing takes this token instead of a secret: the
       # registry checks the claim that this workflow, in this repository, is
       # what built the package.
@@ -32,13 +33,95 @@ jobs:
       # Node 22 is older than that.
       - run: npm install -g npm@latest
       - run: npm ci
+
+      - name: Read the version being released
+        id: version
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # Everything a provenance-signed publish needs, checked before the signing
+      # happens: a failed publish still leaves an entry in the transparency log.
+      - name: Check the release preconditions
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          node -e '
+            const pkg = require("./package.json");
+            const want = `https://github.com/${process.env.GITHUB_REPOSITORY}`;
+            const url = (pkg.repository && pkg.repository.url) || "";
+            if (!url.includes(process.env.GITHUB_REPOSITORY)) {
+              throw new Error(`package.json repository.url is "${url}", expected to match ${want}; provenance will be refused`);
+            }
+          '
+          npm --version
+          node -e '
+            const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number);
+            const ok = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)));
+            if (!ok) throw new Error(`npm ${process.env.NPM_VERSION} is too old for trusted publishing; needs 11.5.1`);
+          ' NPM_VERSION="$(npm --version)"
+          if npm view "$(node -p 'require("./package.json").name')@${TAG#v}" version >/dev/null 2>&1; then
+            echo "::error::${TAG#v} is already published; bump the version"
+            exit 1
+          fi
+
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - run: node scripts/smoke.mjs
       - run: node scripts/smoke.cjs
+
       - name: Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
         # No NODE_AUTH_TOKEN: the OIDC token above is the credential, and
         # provenance is attested from the same claim.
         run: npm publish --provenance --access public
+
+      # The tag records which commit produced what is now on the registry, so it
+      # is written after the publish succeeds, never before.
+      - name: Tag the released commit
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "${TAG} already exists — this release was triggered by it"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG}" -m "schema-fit ${TAG}"
+            git push origin "${TAG}"
+          fi
+
+      - name: Cut the GitHub release
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "release ${TAG} already exists"
+            exit 0
+          fi
+          # The changelog section for this version, and nothing else.
+          awk -v want="## ${TAG#v}" '$0 == want {flag = 1; next} /^## / {flag = 0} flag' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "See CHANGELOG.md." > notes.md
+          gh release create "${TAG}" --title "${TAG}" --notes-file notes.md --verify-tag
+
+      - name: Verify the published package resolves
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          name="$(node -p 'require("./package.json").name')"
+          # The registry does not serve a new version instantly.
+          for attempt in $(seq 1 30); do
+            if [ "$(npm view "${name}@${TAG#v}" version 2>/dev/null)" = "${TAG#v}" ]; then
+              break
+            fi
+            sleep 10
+          done
+          work="$(mktemp -d)"
+          cd "$work"
+          npm init -y >/dev/null
+          npm install "${name}@${TAG#v}" --no-audit --no-fund
+          node -e "import('${name}').then((m) => { if (typeof m.fit !== 'function') throw new Error('esm entry point is wrong'); console.log('esm ok'); })"
+          node -e "if (typeof require('${name}').fit !== 'function') throw new Error('cjs entry point is wrong'); console.log('cjs ok')"

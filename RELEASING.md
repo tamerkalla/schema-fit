@@ -10,15 +10,20 @@ provenance statement.
 
 1. Bump `version` in `package.json` and add a `CHANGELOG.md` entry.
 2. Push to `main`.
-3. Either push the tag — `git tag -a v0.1.1 -m "schema-fit 0.1.1" && git push
-   origin v0.1.1` — or run the **Release** workflow from the Actions tab.
+3. Run the **Release** workflow from the Actions tab.
 
-The workflow runs typecheck, the full test suite, the build and both smoke
-scripts before publishing. Its `dry_run` input does all of that and stops short
-of publishing, if you want to watch it go green first.
+That is the whole ceremony. The workflow checks its own preconditions, runs
+typecheck, the full test suite, the build and both smoke scripts, publishes,
+**tags the commit it published**, cuts a GitHub release from the changelog
+entry, and then installs the published package from the registry and loads both
+entry points to prove the artifact works.
+
+Pushing a `v*` tag by hand also triggers it, and the tagging step notices the
+tag already exists. Its `dry_run` input does everything except publish, tag and
+release, if you want to watch it go green first.
 
 The registry rejects a version that already exists, so the version bump in step
-1 is the whole ceremony.
+1 is what makes each release distinct.
 
 ## What a release needs from the repository
 
