@@ -1,0 +1,27 @@
+name: Set default branch
+
+# Repository settings are not reachable from a development session, but the
+# workflow token can set them. Run once; delete when the repository's default
+# branch is right.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to make the repository default
+        type: string
+        default: main
+
+permissions:
+  administration: write
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Point the repository at the chosen branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          gh api -X PATCH "repos/${GITHUB_REPOSITORY}" -f default_branch="${BRANCH}"
+          echo "default branch is now: $(gh api "repos/${GITHUB_REPOSITORY}" --jq .default_branch)"
