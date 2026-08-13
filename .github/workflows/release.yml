@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # npm's trusted publishing takes this token instead of a secret: the
+      # registry checks the claim that this workflow, in this repository, is
+      # what built the package.
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +28,17 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or newer; the version bundled with
+      # Node 22 is older than that.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - run: node scripts/smoke.mjs
       - run: node scripts/smoke.cjs
-      - run: npm publish --provenance --access public
+      - name: Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No NODE_AUTH_TOKEN: the OIDC token above is the credential, and
+        # provenance is attested from the same claim.
+        run: npm publish --provenance --access public

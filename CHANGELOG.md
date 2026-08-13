@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1
+
+- `package.json` now points at the repository, which npm requires before it will
+  accept a provenance statement. Without it the 0.1.0 publish was refused with
+  `422 ... "repository.url" is ""` after the statement had already been signed.
+- Releases publish through npm's trusted publishing rather than a token.
+
+No change to the library itself.
+
 ## 0.1.0
 
 First release.

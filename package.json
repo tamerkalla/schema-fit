@@ -1,6 +1,6 @@
 {
   "name": "schema-fit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rewrite a JSON Schema so a specific LLM provider accepts it, without ever widening what it allows.",
   "keywords": [
     "json-schema",
