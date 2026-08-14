@@ -52,12 +52,15 @@ jobs:
               throw new Error(`package.json repository.url is "${url}", expected to match ${want}; provenance will be refused`);
             }
           '
-          npm --version
-          node -e '
-            const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number);
+          # The assignment has to come first to reach node's environment; after
+          # the command it is just an argument, and the check reads undefined.
+          NPM_VERSION="$(npm --version)" node -e '
+            const version = process.env.NPM_VERSION;
+            const [major, minor, patch] = version.split(".").map(Number);
             const ok = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)));
-            if (!ok) throw new Error(`npm ${process.env.NPM_VERSION} is too old for trusted publishing; needs 11.5.1`);
-          ' NPM_VERSION="$(npm --version)"
+            if (!ok) throw new Error(`npm ${version} is too old for trusted publishing; needs 11.5.1`);
+            console.log(`npm ${version} supports trusted publishing`);
+          '
           if npm view "$(node -p 'require("./package.json").name')@${TAG#v}" version >/dev/null 2>&1; then
             echo "::error::${TAG#v} is already published; bump the version"
             exit 1
