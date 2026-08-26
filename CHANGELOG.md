@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.4
+
+- The README now points to `schema-envoy`, which takes the opposite position on
+  the same problem: where `fit` refuses to widen and narrows instead, `envoy`
+  performs the conversion the provider requires, measures the widening against a
+  generated corpus, and returns a validator over the constraints the provider
+  will not enforce. A reader landing on either package can now tell which one
+  solves their problem.
+
+No change to the library itself.
+
 ## 0.1.3
 
 - The release workflow now tags the commit it published and cuts a GitHub
