@@ -341,6 +341,17 @@ No other draft. No remote or file `$ref`. No runtime dependency. No code
 generation. No instance validation — that is `ajv`'s job, and it stays a dev
 dependency here. No CLI.
 
+## Related
+
+[`schema-envoy`](https://github.com/tamerkalla/schema-envoy) takes the opposite
+position. Where `fit` refuses to widen and narrows instead, `envoy` performs the
+conversion the provider requires, measures the widening it causes against a
+generated corpus, and hands back a validator over the constraints the provider
+will not enforce.
+
+Use `schema-fit` when widening is unacceptable. Use `schema-envoy` when widening
+is unavoidable and you need it measured.
+
 ## License
 
 MIT
