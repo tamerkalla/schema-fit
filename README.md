@@ -3,6 +3,11 @@
 Rewrite a JSON Schema so a specific LLM provider will accept it — without ever
 widening what the schema allows.
 
+[![build](https://github.com/tamerkalla/schema-fit/actions/workflows/release.yml/badge.svg)](https://github.com/tamerkalla/schema-fit/actions/workflows/release.yml)
+[![npm](https://img.shields.io/npm/v/schema-fit.svg)](https://www.npmjs.com/package/schema-fit)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![provenance](https://img.shields.io/badge/provenance-attested-brightgreen.svg)](https://www.npmjs.com/package/schema-fit)
+
 Zero runtime dependencies. TypeScript, ES2022, dual ESM/CJS. Draft 2020-12 only.
 
 ```bash
@@ -343,7 +348,7 @@ dependency here. No CLI.
 
 ## Related
 
-[`schema-envoy`](https://github.com/tamerkalla/schema-envoy) takes the opposite
+[`schema-envoy`](https://www.npmjs.com/package/schema-envoy) takes the opposite
 position. Where `fit` refuses to widen and narrows instead, `envoy` performs the
 conversion the provider requires, measures the widening it causes against a
 generated corpus, and hands back a validator over the constraints the provider

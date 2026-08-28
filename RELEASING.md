@@ -8,22 +8,22 @@ provenance statement.
 
 ## To cut a release
 
-1. Bump `version` in `package.json` and add a `CHANGELOG.md` entry.
-2. Push to `main`.
-3. Run the **Release** workflow from the Actions tab.
+Run the **Release** workflow from the Actions tab (`workflow_dispatch`), choosing
+a `bump` (`patch`, `minor` or `major`) and an `auth` mode (`oidc`, unless this is
+the very first publish and no trusted publisher is configured yet, in which case
+`token` falls back to `NPM_TOKEN`).
 
-That is the whole ceremony. The workflow checks its own preconditions, runs
-typecheck, the full test suite, the build and both smoke scripts, publishes,
-**tags the commit it published**, cuts a GitHub release from the changelog
-entry, and then installs the published package from the registry and loads both
-entry points to prove the artifact works.
+That is the whole ceremony. The workflow runs typecheck, the full test suite,
+the build and both smoke scripts, bumps `version` in `package.json`, publishes,
+**tags the commit it just published**, pushes the version commit and tag back to
+`main`, and cuts a GitHub release from the tag.
 
-Pushing a `v*` tag by hand also triggers it, and the tagging step notices the
-tag already exists. Its `dry_run` input does everything except publish, tag and
-release, if you want to watch it go green first.
+A plain push to `main` runs the same workflow but never bumps or publishes,
+unless `package.json` still reads the `0.0.0` placeholder — that path exists
+only to make the first release on a fresh repository need no human action.
 
-The registry rejects a version that already exists, so the version bump in step
-1 is what makes each release distinct.
+There is deliberately no tag trigger: this workflow creates the tag itself, so a
+tag push would race it and try to publish the same version twice.
 
 ## What a release needs from the repository
 
@@ -54,4 +54,5 @@ npm audit signatures            # in a project that installed it
 
 `dist.attestations` on the registry metadata is the provenance; it is what
 lets anyone check the package came from this repository's workflow rather than
-from someone's laptop.
+from someone's laptop. See [VERIFY.md](VERIFY.md) to reproduce the README's
+guarantee from the published package.
