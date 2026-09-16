@@ -1,7 +1,7 @@
 # Verifying schema-fit
 
-This reproduces the README's guarantee — `validate(fit(S, P).schema, i) ⟹
-validate(S, i)` — from the published package, in a clean directory. It does
+This reproduces the README's guarantee, `validate(fit(S, P).schema, i) ⟹
+validate(S, i)`: from the published package, in a clean directory. It does
 not require this repository to be checked out.
 
 ```bash
@@ -63,7 +63,7 @@ soundness counterexamples over 5 candidates: 0
 profile: three violations (`additionalProperties`, `limit` not required,
 `limit`'s `default`). `after` confirms `fit`'s rewrite satisfies that same
 profile completely. `lossless=false` is truthful, not a bug: `limit` is now
-required, so a caller that omitted it is rejected by the fitted schema — the
+required, so a caller that omitted it is rejected by the fitted schema, the
 guarantee is about *widening*, never about losing nothing. The last line is
 the guarantee itself, checked directly with `ajv`: every one of the five
 candidate instances the fitted schema accepts is also accepted by the

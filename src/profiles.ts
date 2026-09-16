@@ -4,7 +4,7 @@ import type { Profile } from './types.js';
  * Every field below is sourced from the provider's published documentation, and
  * the documentation URL is cited above each profile. Fields the documentation
  * does not state outright carry a `// unverified` comment and take the
- * conservative value — conservative meaning "the choice that cannot make `fit`
+ * conservative value, conservative meaning "the choice that cannot make `fit`
  * hand back a schema that accepts more than the original", which is what the
  * soundness guarantee is made of.
  *
@@ -13,7 +13,7 @@ import type { Profile } from './types.js';
  */
 
 /**
- * OpenAI — Structured Outputs / strict function calling.
+ * OpenAI, Structured Outputs / strict function calling.
  * https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
  * https://platform.openai.com/docs/guides/function-calling#strict-mode
  */
@@ -33,7 +33,7 @@ export const openaiStrict: Profile = {
     allOf: false, // not listed among supported keywords
     not: false, // not listed among supported keywords
     enum: true,
-    const: false, // unverified — not listed among supported keywords
+    const: false, // unverified, not listed among supported keywords
     patternProperties: false, // not listed among supported keywords
     additionalItems: false, // not listed among supported keywords
     tupleItems: false, // prefixItems is not listed among supported keywords
@@ -47,7 +47,7 @@ export const openaiStrict: Profile = {
     // profile field covers all three at once and dropping a bound is the one
     // rewrite that can widen a schema, so the group stays on. See README.
     arrayBounds: true,
-    defaults: false, // unverified — "default" is not listed among supported keywords
+    defaults: false, // unverified, "default" is not listed among supported keywords
     // "To denote an optional field, use a union type with null."
     nullableViaType: true,
   },
@@ -59,7 +59,7 @@ export const openaiStrict: Profile = {
 };
 
 /**
- * Anthropic — tool `input_schema`.
+ * Anthropic, tool `input_schema`.
  * https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview
  * https://docs.anthropic.com/en/api/messages#body-tools
  *
@@ -74,7 +74,7 @@ export const anthropic: Profile = {
   rootMustBeObject: true,
   additionalPropertiesMustBeFalse: false,
   allPropertiesMustBeRequired: false,
-  refs: 'internal', // unverified — internal $ref is not documented as rejected
+  refs: 'internal', // unverified, internal $ref is not documented as rejected
   supports: {
     oneOf: true, // unverified
     anyOf: true, // unverified
@@ -92,13 +92,13 @@ export const anthropic: Profile = {
     defaults: true, // unverified
     nullableViaType: true, // unverified
   },
-  maxDepth: null, // unverified — no documented nesting limit
-  maxProperties: null, // unverified — no documented property-count limit
+  maxDepth: null, // unverified, no documented nesting limit
+  maxProperties: null, // unverified, no documented property-count limit
   unknownKeywords: 'keep',
 };
 
 /**
- * Google Gemini — `responseSchema` and function-declaration parameters, which
+ * Google Gemini, `responseSchema` and function-declaration parameters, which
  * take an OpenAPI 3.0 Schema object rather than JSON Schema.
  * https://ai.google.dev/gemini-api/docs/structured-output
  * https://ai.google.dev/api/caching#Schema
@@ -110,7 +110,7 @@ export const gemini: Profile = {
   // The Schema object has no additionalProperties field.
   additionalPropertiesMustBeFalse: false,
   allPropertiesMustBeRequired: false,
-  refs: 'none', // unverified — the documented Schema fields do not include $ref
+  refs: 'none', // unverified, the documented Schema fields do not include $ref
   supports: {
     oneOf: false, // the Schema object documents anyOf only
     anyOf: true,
@@ -136,8 +136,8 @@ export const gemini: Profile = {
     // type is a single enum value; nullability is expressed with `nullable`.
     nullableViaType: false,
   },
-  maxDepth: null, // unverified — no documented nesting limit
-  maxProperties: null, // unverified — no documented property-count limit
+  maxDepth: null, // unverified, no documented nesting limit
+  maxProperties: null, // unverified, no documented property-count limit
   unknownKeywords: 'strip',
 };
 

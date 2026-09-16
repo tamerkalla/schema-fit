@@ -4,7 +4,7 @@ import type { JSONSchema } from '../src/types.js';
 
 /**
  * The merge engine is where "and" gets written as a single schema. When it
- * cannot be, it says so, and hands back something that accepts nothing — never
+ * cannot be, it says so, and hands back something that accepts nothing, never
  * something that accepts more than both inputs.
  */
 
@@ -70,7 +70,7 @@ const rows: Row[] = [
   },
   {
     // The closed side allows no `y` at all, so the merge has to reject any
-    // object carrying one — not quietly let the other side's `y` through.
+    // object carrying one, not quietly let the other side's `y` through.
     name: 'a closed object bans the properties the other side declares',
     a: { properties: { x: { type: 'string' } }, additionalProperties: false },
     b: { properties: { y: { type: 'number' } } },

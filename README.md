@@ -1,6 +1,6 @@
 # schema-fit
 
-Rewrite a JSON Schema so a specific LLM provider will accept it — without ever
+Rewrite a JSON Schema so a specific LLM provider will accept it, without ever
 widening what the schema allows.
 
 [![build](https://github.com/tamerkalla/schema-fit/actions/workflows/release.yml/badge.svg)](https://github.com/tamerkalla/schema-fit/actions/workflows/release.yml)
@@ -25,14 +25,14 @@ validate(fit(S, P).schema, i)  ⟹  validate(S, i)
 ```
 
 **Soundness only. The converse does not hold and is not claimed.** A fitted
-schema may reject instances the original accepted — that is exactly what
+schema may reject instances the original accepted, that is exactly what
 `narrowing: true` records on a change, and what `lossless: false` summarises.
 
 The asymmetry is the point. Providers reject different, undocumented subsets of
 JSON Schema, so *something* has to give. What must never give is the direction:
 if the model returns a value your fitted schema accepts, your original schema
 accepts it too, and the code behind your tool can trust its own types. Anything
-the fitted schema turns away, you find out about in `changes` — before you ship,
+the fitted schema turns away, you find out about in `changes`: before you ship,
 not from a support ticket.
 
 This is why `fit` sometimes hands back a schema that accepts nothing at all. When
@@ -43,11 +43,11 @@ that keeps the implication true, and it is always recorded as narrowing. See
 ### The assumption it rests on
 
 `validate` above means draft 2020-12 with its default vocabularies, where
-`format` is an **annotation** — a note about a string, not a rule. `fit` drops a
+`format` is an **annotation**, a note about a string, not a rule. `fit` drops a
 format the provider does not honour on exactly that basis.
 
-If you validate with the format-assertion vocabulary switched on — which is what
-`ajv-formats` does — then a dropped `format` is a real widening, and the fitted
+If you validate with the format-assertion vocabulary switched on, which is what
+`ajv-formats` does, then a dropped `format` is a real widening, and the fitted
 schema will accept `"zz"` where your original accepted only an email address.
 Two ways to keep the guarantee under format assertion: stick to formats your
 profile honours (the matrix below lists them), or keep validating responses
@@ -79,7 +79,7 @@ check(schema, profiles.openaiStrict);
 
 const { schema: fitted, changes, lossless } = fit(schema, profiles.openaiStrict);
 // fitted:  { …, required: ['query', 'limit'], additionalProperties: false }
-// lossless: false — `limit` is now required, which rejects calls that omitted it
+// lossless: false, `limit` is now required, which rejects calls that omitted it
 ```
 
 `check` tells you what a provider will object to. `fit` rewrites it and tells you
@@ -144,7 +144,7 @@ internal `$ref` (OpenAI, Anthropic) never throws, because the cycle can stay.
 ## Profiles are data
 
 A profile is a plain object. Adding a provider never means touching the rewrite
-engine — copy the nearest one, change the fields, pass it in.
+engine, copy the nearest one, change the fields, pass it in.
 
 ```ts
 import { profiles, fit } from 'schema-fit';
@@ -161,11 +161,11 @@ fit(schema, myProvider);
 Every field on the shipped three is sourced from provider documentation, cited in
 a comment above each profile in [`src/profiles.ts`](src/profiles.ts). Fields the
 documentation does not state are marked `// unverified` and take the conservative
-value — the one that cannot make `fit` hand back a schema wider than the original.
+value, the one that cannot make `fit` hand back a schema wider than the original.
 
 ## Compatibility matrix
 
-What the three shipped profiles accept. `—` means unsupported, so `fit` rewrites
+What the three shipped profiles accept. `no` means unsupported, so `fit` rewrites
 it away.
 
 | | `openaiStrict` | `anthropic` | `gemini` |
@@ -173,22 +173,22 @@ it away.
 | Root must be an object | yes | yes | no |
 | `additionalProperties: false` required | yes | no | no |
 | Every property required | yes | no | no |
-| `$ref` | internal | internal | — (inlined) |
-| `oneOf` | — | yes | — |
+| `$ref` | internal | internal | no (inlined) |
+| `oneOf` | no | yes | no |
 | `anyOf` | yes | yes | yes |
-| `allOf` | — | yes | — |
-| `not` | — | yes | — |
+| `allOf` | no | yes | no |
+| `not` | no | yes | no |
 | `enum` | yes | yes | yes |
-| `const` | — | yes | — |
-| `patternProperties` | — | yes | — |
-| Tuple `prefixItems` | — | yes | — |
-| `additionalItems` | — | yes | — |
+| `const` | no | yes | no |
+| `patternProperties` | no | yes | no |
+| Tuple `prefixItems` | no | yes | no |
+| `additionalItems` | no | yes | no |
 | `format` | 9 values | all | 9 values |
 | Number bounds | yes | yes | yes |
 | String bounds | yes | yes | yes |
 | Array bounds | yes | yes | yes |
-| `default` | — | yes | yes |
-| `type: ['string','null']` | yes | yes | — |
+| `default` | no | yes | yes |
+| `type: ['string','null']` | yes | yes | no |
 | Max nesting | 10 | none | none |
 | Max properties per object | 5000 | none | none |
 | Unknown keywords | stripped | kept | stripped |
@@ -200,7 +200,7 @@ instances the original accepted are marked.
 
 | # | Rule | Narrowing? |
 |---|---|---|
-| 1 | Strip keywords the profile does not know | no — draft 2020-12 ignores them anyway |
+| 1 | Strip keywords the profile does not know | no, draft 2020-12 ignores them anyway |
 | 2 | Inline `$ref` as the profile requires | no, unless the inlined pieces cannot be merged |
 | 3 | Force an object root | yes, unless the root was already objects-only |
 | 4 | Replace unsupported combinators | see below |
@@ -226,7 +226,7 @@ Combinators, in order of preference:
 
 Constraints:
 
-- An unhonoured `format` is dropped — draft 2020-12 treats `format` as an
+- An unhonoured `format` is dropped, draft 2020-12 treats `format` as an
   annotation, so this changes nothing about which values are valid.
 - `patternProperties` is folded into the properties it applied to, and the object
   is closed so the patterns cannot match anything else.
@@ -238,12 +238,12 @@ Constraints:
 ## Where `fit` gives up
 
 Three situations have no sound rewrite, and all three produce a schema that
-accepts nothing — recorded as narrowing, never as a silent widening:
+accepts nothing, recorded as narrowing, never as a silent widening:
 
 1. **Overlapping `oneOf` options** with no `anyOf`, `allOf`, or `not` to express
    them. Keeping any single option would accept values matching two options,
    which `oneOf` rejects.
-2. **`allOf` pieces that cannot be merged** — two different `pattern`s, say.
+2. **`allOf` pieces that cannot be merged**, two different `pattern`s, say.
    Dropping either one would accept strings the original rejected.
 3. **A rewrite needed inside a `not`, an `if`, or a `oneOf` option.** In those
    positions, making a subschema stricter makes the schema *around* it looser.
@@ -254,7 +254,7 @@ Nesting past the profile's limit does the same thing to the subtree below it.
 The one place `fit` steps around this rather than into it is a profile that
 requires every property, given a self-referential schema. Requiring
 `next` at every level of `{"next": {"$ref": "#"}}` leaves nothing finite to
-satisfy it, so the property is dropped instead — it was optional, so an object
+satisfy it, so the property is dropped instead, it was optional, so an object
 without it is one the original accepts. Recursion that ends in an empty array
 (`{"children": {"type": "array", "items": {"$ref": "#"}}}`) needs no such help
 and is left alone.
@@ -274,20 +274,20 @@ make the field required, and let the model send `null` to mean "absent".
 `{ properties: { a: { type: 'string' } }, required: [] }`, the original accepts
 `{}` and `{"a": "x"}` and rejects `{"a": null}`. Rewriting it to
 `{ properties: { a: { type: ['string','null'] } }, required: ['a'] }` accepts
-`{"a": null}` — a value the original turns away, which your code was never
+`{"a": null}`: a value the original turns away, which your code was never
 written to receive.
 
 So `fit` makes the property required and stops there. That rejects `{}`, which is
 a real loss, and it is reported: `narrowing: true`, `lossless: false`. If the
 null convention is what you want, it is a decision about your own schema, and the
-place to make it is your schema — then `fit` will carry it through untouched.
+place to make it is your schema, then `fit` will carry it through untouched.
 
 ## What a profile cannot say
 
 A `Profile` has a field for every keyword group it can talk about, and no others.
-Keywords outside that list — `if`/`then`/`else`, `contains`, `propertyNames`,
+Keywords outside that list, `if`/`then`/`else`, `contains`, `propertyNames`,
 `dependentSchemas`, `dependentRequired`, `unevaluatedProperties`,
-`unevaluatedItems`, `$schema`, `$id` — are carried through untouched, because
+`unevaluatedItems`, `$schema`, `$id`: are carried through untouched, because
 there is no field to consult and dropping them would widen the schema.
 
 If your provider rejects one of those, `check` will not warn you and `fit` will
@@ -300,7 +300,7 @@ under `not`.
 A profile that turns off `numericBounds`, `stringBounds`, or `arrayBounds` is
 saying the provider ignores those keywords. `fit` drops them, because keeping
 them means a rejected request. The fitted schema is then genuinely wider than the
-original, and the guarantee holds only in the sense that matters — the provider
+original, and the guarantee holds only in the sense that matters, the provider
 was never going to enforce them anyway.
 
 **None of the three shipped profiles turns those groups off.** If you write a
@@ -313,12 +313,12 @@ The four properties that hold the guarantee up, in
 [`test/property.test.ts`](test/property.test.ts), driven by `fast-check` over a
 generator of draft 2020-12 schemas:
 
-1. **Soundness** — instances from `json-schema-faker` and arbitrary JSON, run
+1. **Soundness**, instances from `json-schema-faker` and arbitrary JSON, run
    through `ajv` against both schemas: whatever the fitted schema accepts, the
    original accepts.
-2. **Conformance** — `check(fit(S, P).schema, P).ok` is always `true`.
-3. **Idempotence** — fitting a fitted schema changes nothing.
-4. **Identity** — a schema that already conforms comes back untouched.
+2. **Conformance**, `check(fit(S, P).schema, P).ok` is always `true`.
+3. **Idempotence**, fitting a fitted schema changes nothing.
+4. **Identity**, a schema that already conforms comes back untouched.
 
 Plus purity (deep-frozen inputs) and determinism (stable ordering, repeatable
 results). Every rule is table-tested per profile in
@@ -326,7 +326,7 @@ results). Every rule is table-tested per profile in
 [`test/fit.test.ts`](test/fit.test.ts), asserting whole arrays. The positions
 where a rewrite would run the wrong way have their own file,
 [`test/polarity.test.ts`](test/polarity.test.ts), and the merge engine has
-[`test/intersect.test.ts`](test/intersect.test.ts) — what merges exactly, and
+[`test/intersect.test.ts`](test/intersect.test.ts), what merges exactly, and
 what cannot be written as one schema.
 
 ```bash
@@ -343,7 +343,7 @@ turns it up.
 ## Out of scope
 
 No other draft. No remote or file `$ref`. No runtime dependency. No code
-generation. No instance validation — that is `ajv`'s job, and it stays a dev
+generation. No instance validation, that is `ajv`'s job, and it stays a dev
 dependency here. No CLI.
 
 ## Related

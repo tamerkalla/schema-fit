@@ -12,8 +12,8 @@ import { join, resolve } from './pointer.js';
  * fitted schema accepts nothing, which is sound and useless. The property was
  * optional, so dropping it keeps a schema that still accepts what it can.
  *
- * Dropping one property can make others reachable again — once `next` is gone,
- * the object it sits in is satisfiable, and so is every reference to it — so
+ * Dropping one property can make others reachable again, once `next` is gone,
+ * the object it sits in is satisfiable, and so is every reference to it, so
  * this settles by dropping the innermost offender and asking again. Innermost
  * first is what keeps the loss small: the outer references then need no
  * dropping at all.
@@ -31,13 +31,13 @@ export function unreachableProperties(document: JSONSchema): ReadonlySet<string>
 }
 
 /**
- * Can any instance satisfy this schema, once every property it declares — bar
- * the ones already dropped — is required?
+ * Can any instance satisfy this schema, once every property it declares, bar
+ * the ones already dropped, is required?
  *
  * The answer is the least fixed point: a reference that comes back round to
  * itself contributes nothing, which is what makes a recursive object bottom out
  * at "no". Recursion through an array comes out "yes", since the empty array
- * ends it — which is why providers that demand all-required still document
+ * ends it, which is why providers that demand all-required still document
  * recursive schemas that work.
  *
  * Every case this does not model answers "yes". Being wrong in that direction

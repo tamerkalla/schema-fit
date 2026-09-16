@@ -32,7 +32,7 @@ function extractExamples(markdown: string): Example[] {
 describe("README.md structure", () => {
   const readme = readFileSync(join(ROOT, "README.md"), "utf8");
   const hook =
-    "Rewrite a JSON Schema so a specific LLM provider will accept it — without ever\nwidening what the schema allows.";
+    "Rewrite a JSON Schema so a specific LLM provider will accept it, without ever\nwidening what the schema allows.";
 
   test("opens with the fixed hook", () => {
     expect(readme.startsWith(`# schema-fit\n\n${hook}\n`)).toBe(true);
@@ -141,7 +141,7 @@ describe("every code example in VERIFY.md is executed and its output matches", (
       try {
         // The doc installs from the registry; the test instead reproduces the
         // installed layout by copying this repo's own dependency tree
-        // (already resolved by npm ci — it holds ajv, which the script
+        // (already resolved by npm ci, it holds ajv, which the script
         // needs) and swapping in the tarball this repository just built for
         // schema-fit itself. A fresh, lockfile-less `npm install` here would
         // need the network to resolve versions, and no test may reach it.

@@ -5,7 +5,7 @@ import type { JSONSchema } from '../src/types.js';
 
 /**
  * The question here is "could anything satisfy this, once every property it
- * declares is required?" — which is what a profile demanding all-required
+ * declares is required?", which is what a profile demanding all-required
  * raises and cannot answer for itself. Wrong in the "yes" direction is free;
  * wrong in the "no" direction drops a property that did not need dropping, so
  * every case that is not modelled has to come out "yes".

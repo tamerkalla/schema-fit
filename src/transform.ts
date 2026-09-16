@@ -60,7 +60,7 @@ export function pointsAtTroubled(ref: unknown, plan: Plan): boolean {
  * the places referencing it forbid.
  *
  * The second run takes the other way out: rewrite the definition, and replace the
- * references that reach it from a flipped position — those are what would have
+ * references that reach it from a flipped position, those are what would have
  * widened the schema. Replacing the reference is a far smaller loss than
  * replacing the definition, which every other reference shares.
  *
@@ -159,7 +159,7 @@ function collectReferences(
  * it survives into the result.
  *
  * A definition is the exception. Poison from one does not travel up into the
- * schema that happens to hold the `$defs` section — that would throw away the
+ * schema that happens to hold the `$defs` section, that would throw away the
  * whole document over one negated reference. It is noted instead, and
  * {@link withDefinitionRetry} runs the pass again the other way round.
  */

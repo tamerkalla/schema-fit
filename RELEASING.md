@@ -3,7 +3,7 @@
 Published on npm as [`schema-fit`](https://www.npmjs.com/package/schema-fit),
 from `main`, through npm's **trusted publishing**. There is no token: the
 registry accepts the release because GitHub attests that this workflow, in this
-repository, built it — and the same attestation becomes the package's
+repository, built it, and the same attestation becomes the package's
 provenance statement.
 
 ## To cut a release
@@ -19,7 +19,7 @@ the build and both smoke scripts, bumps `version` in `package.json`, publishes,
 `main`, and cuts a GitHub release from the tag.
 
 A plain push to `main` runs the same workflow but never bumps or publishes,
-unless `package.json` still reads the `0.0.0` placeholder — that path exists
+unless `package.json` still reads the `0.0.0` placeholder, that path exists
 only to make the first release on a fresh repository need no human action.
 
 There is deliberately no tag trigger: this workflow creates the tag itself, so a
@@ -29,7 +29,7 @@ tag push would race it and try to publish the same version twice.
 
 - **Trusted publishing** configured on the npm package, naming this repository
   and `.github/workflows/release.yml`.
-- `permissions: id-token: write` on the publish job — this is the credential.
+- `permissions: id-token: write` on the publish job, this is the credential.
 - npm 11.5.1 or newer. Node 22 ships something older, so the workflow installs
   the current npm first.
 - A `repository` field in `package.json` matching the repository the workflow

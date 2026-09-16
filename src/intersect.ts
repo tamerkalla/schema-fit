@@ -45,7 +45,7 @@ export interface MergeResult {
 class Inexact extends Error {}
 
 /**
- * The largest schema that both inputs accept — or, where that cannot be written
+ * The largest schema that both inputs accept, or, where that cannot be written
  * as one schema, something smaller. Never something larger.
  */
 export function intersect(a: JSONSchema, b: JSONSchema): MergeResult {

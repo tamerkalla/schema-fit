@@ -54,7 +54,7 @@ export interface FitOptions {
  * does not hold: a fitted schema may reject instances the original accepted,
  * and every such rewrite is recorded with `narrowing: true`.
  *
- * Throws {@link UnfittableSchemaError} — and nothing else — when the profile
+ * Throws {@link UnfittableSchemaError}, and nothing else, when the profile
  * forbids `$ref` and the schema references itself.
  */
 export function fit(schema: JSONSchema, profile: Profile): FitResult {
@@ -330,7 +330,7 @@ function branchesOf(node: JSONSchemaObject, keyword: string): JSONSchema[] {
 /**
  * `oneOf` means *exactly* one, so a single branch is only a subset of the whole
  * when nothing else can match alongside it. Where that cannot be shown, keeping
- * a branch would accept instances the original rejected — the one thing this
+ * a branch would accept instances the original rejected, the one thing this
  * library promises never to do.
  */
 function fixOneOf(node: JSONSchemaObject, ctx: Ctx, profile: Profile, out: Recorder): JSONSchema | Poison {
@@ -899,7 +899,7 @@ function requireEveryProperty(schema: JSONSchema, profile: Profile, out: Recorde
       for (const name of missing) {
         const property = properties[name];
         // Requiring a property nothing can satisfy leaves an object nothing can
-        // satisfy either — which is what a self-referential property does once
+        // satisfy either, which is what a self-referential property does once
         // every property is required. The property was optional, so an object
         // without it is one the original accepts: dropping it keeps the schema
         // usable, and closing the object keeps it sound.

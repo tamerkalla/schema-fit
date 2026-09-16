@@ -4,7 +4,7 @@ import { join } from './pointer.js';
 
 /**
  * `nesting` is true when the child sits one instance level deeper than its
- * parent — `properties/a` does, `anyOf/0` does not.
+ * parent, `properties/a` does, `anyOf/0` does not.
  */
 export type Rewriter = (schema: JSONSchema, path: string, nesting: boolean, keyword: string) => JSONSchema;
 

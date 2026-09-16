@@ -240,7 +240,7 @@ describe('property 6: determinism', () => {
 describe('property 7: losslessness means nothing was lost', () => {
   /**
    * Soundness says the fitted schema never accepts more. It says nothing about
-   * accepting *less* — a schema that accepts nothing passes every soundness
+   * accepting *less*, a schema that accepts nothing passes every soundness
    * test ever written. This is the other direction, claimed exactly where the
    * library claims it: when no change is marked narrowing, no instance is lost.
    */

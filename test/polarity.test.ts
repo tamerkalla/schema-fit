@@ -9,7 +9,7 @@ import { permissive, variant } from './profiles.js';
  * Making a subschema stricter usually makes the whole schema stricter. Under
  * `not` it does the opposite, and inside `oneOf` and `if` it does neither
  * reliably. These are the cases where `fit` has to refuse a rewrite it would
- * happily make anywhere else — including when a `$ref` is what carries a
+ * happily make anywhere else, including when a `$ref` is what carries a
  * definition into one of those positions.
  */
 
@@ -109,7 +109,7 @@ describe('positions where a rewrite would run the wrong way', () => {
 
   it('allows a rewrite that loosens a negated schema, and reports it as the narrowing it is', () => {
     // Dropping a limit widens the schema it sits in. Inside a `not`, that makes
-    // the schema around it stricter — sound, but a loss worth reporting.
+    // the schema around it stricter, sound, but a loss worth reporting.
     const ignoresBounds = variant(permissive, { id: 'ignores-bounds', supports: { numericBounds: false } });
     const result = fit({ not: { minimum: 5 } }, ignoresBounds);
     expect(result.schema).toEqual({ not: {} });
@@ -251,7 +251,7 @@ describe('definitions take the position of whatever references them', () => {
       additionalProperties: false,
     };
     const result = fit(schema, strictButExpressive);
-    // One change, from the one object that was open — no sign of a second run.
+    // One change, from the one object that was open, no sign of a second run.
     expect(result.changes.map((change) => change.path)).toEqual(['/$defs/shared/additionalProperties']);
   });
 

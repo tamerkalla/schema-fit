@@ -10,10 +10,10 @@ first, in this order.
 
 1. **`package.json` has a `repository` field matching the repository the
    workflow runs in.** Required by provenance, and nothing local catches its
-   absence — `npm pack --dry-run` is happy without it.
+   absence, `npm pack --dry-run` is happy without it.
 2. **Trusted publishing is configured on the npm package**, naming the
    repository *and* the workflow filename. Or, if using a token, the secret
-   exists — see below for how to tell without printing it.
+   exists, see below for how to tell without printing it.
 3. **The npm on the runner is ≥ 11.5.1.** Node 22 ships older. Trusted
    publishing does not engage on older npm and you get an auth error that looks
    like a missing credential.
@@ -37,7 +37,7 @@ which is why the preflight above is worth doing separately.
 Checking whether a secret exists without leaking it: a workflow step that prints
 `${{ secrets.NPM_TOKEN != '' }}`. Presence only, never the value.
 
-### `npm error code E422` — provenance rejected
+### `npm error code E422`: provenance rejected
 
 ```
 422 Unprocessable Entity - PUT https://registry.npmjs.org/schema-fit
@@ -60,7 +60,7 @@ claim against `package.json`. Two things worth knowing:
 `actions/setup-node` with `registry-url` writes an `.npmrc` containing
 `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`. Delete the secret but
 leave the `env:` line, and that expands to empty. Under trusted publishing the
-`env:` should not be there at all — the OIDC token from `permissions: id-token:
+`env:` should not be there at all, the OIDC token from `permissions: id-token:
 write` is the credential.
 
 ### A tag trigger you cannot reach
@@ -78,7 +78,7 @@ therefore unreachable from such an environment.
 
 Give the release workflow a `workflow_dispatch` trigger alongside the tag one,
 with a `dry_run` input that runs everything and stops short of publishing. That
-also covers re-running a release whose publish failed after the tag landed —
+also covers re-running a release whose publish failed after the tag landed,
 the tag is already used up, and deleting and re-pushing a tag is worse.
 
 ### Repository settings an automated actor cannot change
@@ -86,8 +86,8 @@ the tag is already used up, and deleting and re-pushing a tag is worse.
 Setting the default branch needs the repository administration API. It is not
 reachable from:
 
-- The GitHub MCP tools — no `update_repository`.
-- Direct `api.github.com` — blocked by the egress proxy in this environment.
+- The GitHub MCP tools, no `update_repository`.
+- Direct `api.github.com`: blocked by the egress proxy in this environment.
 - A workflow: `permissions: administration: write` is **not** a valid Actions
   permission scope, and the workflow fails to parse:
   ```
@@ -102,7 +102,7 @@ the preflight, not as steps the pipeline performs.
 
 After a successful publish, the package is not immediately resolvable. Poll
 `https://registry.npmjs.org/<name>` until `dist-tags.latest` is the version you
-just published, with a bounded number of attempts — do not assume a fixed sleep
+just published, with a bounded number of attempts, do not assume a fixed sleep
 is enough, and do not assume a `404` right after publishing means failure.
 
 ### `npm audit signatures` may not be reachable

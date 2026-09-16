@@ -5,7 +5,7 @@ import type { Profile } from '../src/types.js';
 /**
  * The profiles are the library's contract with three providers, so they are
  * pinned field by field. A change to any of them should have to be a deliberate
- * edit here as well as there — with a documentation link to back it up.
+ * edit here as well as there, with a documentation link to back it up.
  */
 
 const openaiStrict: Profile = {

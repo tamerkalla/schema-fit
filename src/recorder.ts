@@ -5,7 +5,7 @@ import type { Change } from './types.js';
  *
  * Most positions are `positive`: making the subschema stricter makes the whole
  * schema stricter. Inside `not` the direction flips, so a rewrite that narrows
- * a subschema *widens* the schema around it — which would break the guarantee.
+ * a subschema *widens* the schema around it, which would break the guarantee.
  * Inside `if` it does neither reliably, since the subschema only chooses which
  * of `then` and `else` applies.
  */
@@ -23,7 +23,7 @@ export function flipPolarity(polarity: Polarity): Polarity {
 export function polarityFor(parent: Polarity, keyword: string): Polarity {
   if (keyword === 'not') return flipPolarity(parent);
   // `if` only picks which of `then` and `else` applies, and `oneOf` counts how
-  // many options match — changing an option either way changes the count. In
+  // many options match, changing an option either way changes the count. In
   // both, only a rewrite that keeps the exact same values is safe.
   if (keyword === 'if' || keyword === 'oneOf') return 'invariant';
   return parent;

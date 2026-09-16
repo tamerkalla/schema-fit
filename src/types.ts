@@ -23,9 +23,9 @@ export interface Profile {
   /** Every declared property must be listed in `required`. */
   allPropertiesMustBeRequired: boolean;
   /**
-   * `'none'` — no `$ref` at all; every internal reference is inlined.
-   * `'internal'` — `#/...` references are kept as written.
-   * `'internal-no-siblings'` — `#/...` references are kept only when `$ref` is
+   * `'none'`: no `$ref` at all; every internal reference is inlined.
+   * `'internal'`: `#/...` references are kept as written.
+   * `'internal-no-siblings'`: `#/...` references are kept only when `$ref` is
    * the sole validation keyword in its schema object.
    */
   refs: 'none' | 'internal' | 'internal-no-siblings';
@@ -93,7 +93,7 @@ export interface FitResult {
 
 /**
  * Thrown by {@link fit} when a schema cannot be rewritten without breaking the
- * soundness guarantee — that is, when a recursive `$ref` has to be inlined
+ * soundness guarantee, that is, when a recursive `$ref` has to be inlined
  * (because the profile forbids `$ref`) but inlining it would never terminate.
  *
  * This is the only condition under which `check` or `fit` throws.
